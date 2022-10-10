@@ -1,86 +1,86 @@
 import discord, random
 
-client = discord.Client()
+class Schicksal(discord.Client):
+    async def on_ready(self):
+        print('We have logged in as {0}'.format(self.user))
 
-@client.event
-async def on_ready():
-    print('We have logged in as {0.user}'.format(client))
+    async def on_message(self, message):
+        if message.author == self.user:
+            return
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
+        # !w 5 p2x7 ls8 b2
+        if message.content.startswith('!w'):
 
-    # !w 5 p2x7 ls8 b2
-    if message.content.startswith('!w'):
+            answer = ''
 
-        answer = ''
+            params = message.content.split()
+            dices  = []
+            dices_str = []
 
-        params = message.content.split()
-        dices  = []
-        dices_str = []
+            for d in range(int(params[1])):
+                dice = random.randint(1, 10)
+                dices.append(dice)
+                dices_str.append(str(dice))
 
-        for d in range(int(params[1])):
-            dice = random.randint(1, 10)
-            dices.append(dice)
-            dices_str.append(str(dice))
+            dices_str.sort(key = int)
 
-        dices_str.sort(key = int)
-
-        answer += ", ".join(dices_str)
+            answer += ", ".join(dices_str)
 
 
-        # optional: probe
-        if(len(params) > 2):
+            # optional: probe
+            if(len(params) > 2):
 
-            answer += " - "
+                answer += " - "
 
-            check_learning = False
-            skill = 0
-            learning_threshold = 0
+                check_learning = False
+                skill = 0
+                learning_threshold = 0
 
-            for p in range(2, len(params)):
+                for p in range(2, len(params)):
 
-                param = params[p]
+                    param = params[p]
 
-                if(param[0] == 'p'):
-                    test_how_many = int(param[1])
-                    test_how_high = int(param[3])
+                    if(param[0] == 'p'):
+                        test_how_many = int(param[1])
+                        test_how_high = int(param[3])
 
-                    if(test_how_high == 0):
-                        test_how_high = 10
+                        if(test_how_high == 0):
+                            test_how_high = 10
 
+                        success = 0
+
+                        for d in dices:
+                            if d >= test_how_high:
+                                success += 1
+
+                        if success >= test_how_many:
+                            answer += "**Erfolg** "
+                        else:
+                            answer += "**Misserfolg** "
+
+                    # optional: lernschwelle
+                    if(param[0] == 'l'):
+                        check_learning = True
+                        learning_threshold = int(param[2])
+
+                    if(param[0] == 'b'):
+                        skill = int(param[1])
+
+                if check_learning:
                     success = 0
-
                     for d in dices:
-                        if d >= test_how_high:
+                        if d >= learning_threshold:
                             success += 1
 
-                    if success >= test_how_many:
-                        answer += "**Erfolg** "
-                    else:
-                        answer += "**Misserfolg** "
+                    if success >= len(dices) - skill:
+                        answer += "__Gesteigert__ "
 
-                # optional: lernschwelle
-                if(param[0] == 'l'):
-                    check_learning = True
-                    learning_threshold = int(param[2])
+            answer = answer.strip()
+            answer = answer.strip("-")
 
-                if(param[0] == 'b'):
-                    skill = int(param[1])
+            await message.channel.send(answer)
 
-            if check_learning:
-                success = 0
-                for d in dices:
-                    if d >= learning_threshold:
-                        success += 1
-
-                if success >= len(dices) - skill:
-                    answer += "__Gesteigert__ "
-
-        answer = answer.strip()
-        answer = answer.strip("-")
-
-        await message.channel.send(answer)
-
-client.run('XYZ')
+intents = discord.Intents.default()
+intents.message_content = True
+client = Schicksal(intents=intents)
+client.run('DISCORD_TOKEN')
